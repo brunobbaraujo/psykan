@@ -10,4 +10,10 @@ version = "0.1.0"
 repository = "https://github.com/bocanada/psykan"
 
 [workspace.dependencies]
+sea-orm = { version = "1.1.0", features = [
+    "macros",
+    "sqlx-postgres",
+    "runtime-tokio-native-tls",
+] }
 pyo3 = "0.25.0"
+tokio = "1.45.1"
