@@ -1,6 +1,6 @@
 mod asset;
+mod graph;
 mod traits;
-
 use traits::Executable;
 
 pub fn main() {
