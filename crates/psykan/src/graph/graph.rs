@@ -65,17 +65,17 @@ impl Graph {
 
     // Helper method to get nodes indexed by key
     pub fn nodes_by_key(&self) -> HashMap<Vec<String>, Rc<Node>> {
-        match self._nodes_by_key.borrow().as_ref() {
-            Some(nodes_by_key) => nodes_by_key.clone(),
-            None => {
-                let mut nodes_by_key = HashMap::new();
-                for node in self.visitation_order() {
-                    nodes_by_key.insert(node.key().clone(), node.clone());
-                }
-                *self._nodes_by_key.borrow_mut() = Some(nodes_by_key.clone());
-                nodes_by_key
-            }
+        if self._nodes_by_key.borrow().is_some() {
+            // If nodes_by_key is already cached, return it
+            return self._nodes_by_key.borrow().as_ref().unwrap().clone();
         }
+        let mut nodes_by_key = HashMap::new();
+        for node in self.visitation_order() {
+            nodes_by_key.insert(node.key().clone(), node.clone());
+        }
+        // Cache the result
+        *self._nodes_by_key.borrow_mut() = Some(nodes_by_key.clone());
+        return nodes_by_key;
     }
 }
 
@@ -146,6 +146,7 @@ mod tests {
         assert_eq!(order[4].key(), &vec!["grandchild".to_string()]);
     }
 
+    #[test]
     fn test_nodes_by_key() {
         let graph = Graph::new();
         let root = Node::new(vec!["root".to_string()]);
