@@ -43,7 +43,6 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          restore-keys: ${{ runner.os }}-cargo-
       - name: Build
         run: cargo build --verbose
       - name: Run tests
