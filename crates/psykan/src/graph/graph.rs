@@ -84,6 +84,40 @@ mod tests {
     use super::*;
     use crate::graph::node::Node;
 
+    fn create_simple_graph() -> Graph {
+        let graph = Graph::new();
+        let root = Node::new(vec!["root".to_string()]);
+        let child1 = Node::new(vec!["child1".to_string()]);
+        let child2 = Node::new(vec!["child2".to_string()]);
+
+        Node::add_child(&root, child1.clone());
+        Node::add_child(&root, child2.clone());
+
+        graph.add_root_node(root.clone());
+        graph
+    }
+
+    fn find_node_by_key(graph: &Graph, key: &Vec<String>) -> Option<Rc<Node>> {
+        graph.nodes_by_key().get(key).cloned()
+    }
+
+    fn create_complex_graph() -> Graph {
+        let graph = Graph::new();
+        let root1 = Node::new(vec!["root1".to_string()]);
+        let root2 = Node::new(vec!["root2".to_string()]);
+        let child1 = Node::new(vec!["child1".to_string()]);
+        let child2 = Node::new(vec!["child2".to_string()]);
+        let grandchild = Node::new(vec!["grandchild".to_string()]);
+
+        Node::add_child(&root1, child1.clone());
+        Node::add_child(&child1, grandchild.clone());
+        Node::add_child(&root2, child2.clone());
+
+        graph.add_root_node(root1.clone());
+        graph.add_root_node(root2.clone());
+        graph
+    }
+
     #[test]
     fn test_graph_creation() {
         let graph = Graph::new();
@@ -104,15 +138,7 @@ mod tests {
 
     #[test]
     fn test_visitation_order() {
-        let graph = Graph::new();
-        let root = Node::new(vec!["root".to_string()]);
-        let child1 = Node::new(vec!["child1".to_string()]);
-        let child2 = Node::new(vec!["child2".to_string()]);
-
-        Node::add_child(&root, child1.clone());
-        Node::add_child(&root, child2.clone());
-
-        graph.add_root_node(root.clone());
+        let graph = create_simple_graph();
 
         let order = graph.visitation_order();
         assert_eq!(order.len(), 3);
@@ -123,19 +149,7 @@ mod tests {
 
     #[test]
     fn test_complex_visitation_order() {
-        let graph = Graph::new();
-        let root1 = Node::new(vec!["root1".to_string()]);
-        let root2 = Node::new(vec!["root2".to_string()]);
-        let child1 = Node::new(vec!["child1".to_string()]);
-        let child2 = Node::new(vec!["child2".to_string()]);
-        let grandchild = Node::new(vec!["grandchild".to_string()]);
-
-        Node::add_child(&root1, child1.clone());
-        Node::add_child(&child1, grandchild.clone());
-        Node::add_child(&root2, child2.clone());
-
-        graph.add_root_node(root1.clone());
-        graph.add_root_node(root2.clone());
+        let graph = create_complex_graph();
 
         let order = graph.visitation_order();
         assert_eq!(order.len(), 5);
@@ -148,20 +162,29 @@ mod tests {
 
     #[test]
     fn test_nodes_by_key() {
-        let graph = Graph::new();
-        let root = Node::new(vec!["root".to_string()]);
-        let child1 = Node::new(vec!["child1".to_string()]);
-        let child2 = Node::new(vec!["child2".to_string()]);
-
-        Node::add_child(&root, child1.clone());
-        Node::add_child(&root, child2.clone());
-
-        graph.add_root_node(root.clone());
+        let graph = create_complex_graph();
 
         let nodes_by_key = graph.nodes_by_key();
-        assert_eq!(nodes_by_key.len(), 3);
-        assert!(nodes_by_key.contains_key(&vec!["root".to_string()]));
+        assert_eq!(nodes_by_key.len(), 5);
+        assert!(nodes_by_key.contains_key(&vec!["root1".to_string()]));
+        assert!(nodes_by_key.contains_key(&vec!["root2".to_string()]));
         assert!(nodes_by_key.contains_key(&vec!["child1".to_string()]));
         assert!(nodes_by_key.contains_key(&vec!["child2".to_string()]));
+        assert!(nodes_by_key.contains_key(&vec!["grandchild".to_string()]));
+
+        assert!(
+            nodes_by_key
+                .get(&vec!["root1".to_string()])
+                .unwrap()
+                .get_parent()
+                .is_none(),
+        );
+        assert_eq!(
+            nodes_by_key
+                .get(&vec!["root1".to_string()])
+                .unwrap()
+                .get_children(),
+            vec![Node::new(vec!["child1".to_string()]),]
+        );
     }
 }

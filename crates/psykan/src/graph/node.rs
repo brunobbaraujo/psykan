@@ -1,11 +1,17 @@
 use std::cell::RefCell;
 use std::rc::{Rc, Weak};
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Node {
     key: Vec<String>,
     parent: RefCell<Weak<Node>>,
     children: RefCell<Vec<Rc<Node>>>,
+}
+
+impl PartialEq for Node {
+    fn eq(&self, other: &Self) -> bool {
+        self.key == other.key
+    }
 }
 
 impl Node {
