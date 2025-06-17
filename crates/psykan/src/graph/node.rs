@@ -25,11 +25,7 @@ impl Node {
 
     pub fn add_child(parent: &Rc<Node>, child: Rc<Node>) {
         child.parent.replace(Rc::downgrade(parent));
-        parent.children.borrow_mut().push(child);
-        parent
-            .children
-            .borrow_mut()
-            .sort_by_key(|c| c.key().clone());
+        parent.children.borrow_mut().push(Rc::clone(&child));
     }
 
     pub fn remove_child(parent: &Rc<Node>, child_key: &Vec<String>) -> Option<Rc<Node>> {
@@ -50,6 +46,7 @@ impl Node {
     }
 
     pub fn get_children(&self) -> Vec<Rc<Node>> {
+        self.children.borrow_mut().sort_by_key(|c| c.key().clone());
         self.children.borrow().clone()
     }
 }
