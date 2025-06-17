@@ -60,10 +60,7 @@ impl Graph {
         }
 
         // Cache the result
-<<<<<<< HEAD
         self._visitation_order.borrow_mut().replace(result.clone());
-=======
->>>>>>> main
         result
     }
 
