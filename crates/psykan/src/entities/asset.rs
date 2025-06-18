@@ -2,7 +2,7 @@ use crate::traits::Executable;
 
 pub struct Asset<F, R>
 where
-    F: Fn() -> R,
+    F: FnOnce() -> R,
 {
     pub name: String,
     pub key: Vec<String>,

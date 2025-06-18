@@ -2,33 +2,35 @@ use std::cell::RefCell;
 use std::rc::{Rc, Weak};
 
 #[derive(Clone, Debug)]
-pub struct Node {
+pub struct Node<F> {
     key: Vec<String>,
-    parent: RefCell<Weak<Node>>,
-    children: RefCell<Vec<Rc<Node>>>,
+    parent: RefCell<Weak<Node<F>>>,
+    children: RefCell<Vec<Rc<Node<F>>>>,
+    data: Option<F>,
 }
 
-impl PartialEq for Node {
+impl<F> PartialEq for Node<F> {
     fn eq(&self, other: &Self) -> bool {
         self.key == other.key
     }
 }
 
-impl Node {
-    pub fn new(key: Vec<String>) -> Rc<Self> {
+impl<F> Node<F> {
+    pub fn new(key: Vec<String>, data: Option<F>) -> Rc<Self> {
         Rc::new(Self {
             key,
             parent: RefCell::new(Weak::new()),
             children: RefCell::new(vec![]),
+            data: data,
         })
     }
 
-    pub fn add_child(parent: &Rc<Node>, child: Rc<Node>) {
+    pub fn add_child(parent: &Rc<Node<F>>, child: Rc<Node<F>>) {
         child.parent.replace(Rc::downgrade(parent));
         parent.children.borrow_mut().push(Rc::clone(&child));
     }
 
-    pub fn remove_child(parent: &Rc<Node>, child_key: &Vec<String>) -> Option<Rc<Node>> {
+    pub fn remove_child(parent: &Rc<Node<F>>, child_key: &Vec<String>) -> Option<Rc<Node<F>>> {
         let mut children = parent.children.borrow_mut();
         if let Some(pos) = children.iter().position(|c| c.key() == child_key) {
             Some(children.remove(pos))
@@ -41,11 +43,11 @@ impl Node {
         &self.key
     }
 
-    pub fn get_parent(&self) -> Option<Rc<Node>> {
+    pub fn get_parent(&self) -> Option<Rc<Node<F>>> {
         self.parent.borrow().upgrade()
     }
 
-    pub fn get_children(&self) -> Vec<Rc<Node>> {
+    pub fn get_children(&self) -> Vec<Rc<Node<F>>> {
         self.children.borrow_mut().sort_by_key(|c| c.key().clone());
         self.children.borrow().clone()
     }
@@ -57,7 +59,7 @@ mod tests {
 
     #[test]
     fn test_node_creation() {
-        let node = Node::new(vec!["root".to_string()]);
+        let node: Rc<Node<i32>> = Node::new(vec!["root".to_string()], None);
         assert_eq!(node.key(), &vec!["root".to_string()]);
         assert!(node.get_parent().is_none());
         assert!(node.get_children().is_empty());
@@ -65,8 +67,8 @@ mod tests {
 
     #[test]
     fn test_add_child() {
-        let parent = Node::new(vec!["parent".to_string()]);
-        let child = Node::new(vec!["child".to_string()]);
+        let parent: Rc<Node<i32>> = Node::new(vec!["parent".to_string()], None);
+        let child: Rc<Node<i32>> = Node::new(vec!["child".to_string()], None);
         Node::add_child(&parent, child.clone());
 
         assert_eq!(parent.get_children().len(), 1);
@@ -79,9 +81,9 @@ mod tests {
 
     #[test]
     fn test_remove_child() {
-        let parent = Node::new(vec!["parent".to_string()]);
-        let child1 = Node::new(vec!["child1".to_string()]);
-        let child2 = Node::new(vec!["child2".to_string()]);
+        let parent: Rc<Node<i32>> = Node::new(vec!["parent".to_string()], None);
+        let child1: Rc<Node<i32>> = Node::new(vec!["child1".to_string()], None);
+        let child2: Rc<Node<i32>> = Node::new(vec!["child2".to_string()], None);
 
         Node::add_child(&parent, child1.clone());
         Node::add_child(&parent, child2.clone());
