@@ -1,15 +1,16 @@
 use crate::graph::node::Node;
+use crate::traits::NodeContent;
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::rc::Rc;
 
-pub struct Graph {
-    pub root_nodes: RefCell<Vec<Rc<Node>>>,
-    _nodes_by_key: RefCell<Option<HashMap<Vec<String>, Rc<Node>>>>,
-    _visitation_order: RefCell<Option<Vec<Rc<Node>>>>,
+pub struct Graph<T: NodeContent> {
+    pub root_nodes: RefCell<Vec<Rc<Node<T>>>>,
+    _nodes_by_key: RefCell<Option<HashMap<Vec<String>, Rc<Node<T>>>>>,
+    _visitation_order: RefCell<Option<Vec<Rc<Node<T>>>>>,
 }
 
-impl Graph {
+impl<T: NodeContent> Graph<T> {
     pub fn new() -> Self {
         Graph {
             root_nodes: RefCell::new(vec![]),
@@ -18,7 +19,7 @@ impl Graph {
         }
     }
 
-    pub fn add_root_node(&self, node: Rc<Node>) {
+    pub fn add_root_node(&self, node: Rc<Node<T>>) {
         self.root_nodes.borrow_mut().push(node);
         // Invalidate cached visitation order and nodes by key
         *self._visitation_order.borrow_mut() = None;
@@ -27,7 +28,7 @@ impl Graph {
 
     // Performs a depth-first search (DFS) starting from the root nodes
     // Returns a vector of nodes in the order they were visited
-    pub fn visitation_order(&self) -> Vec<Rc<Node>> {
+    pub fn visitation_order(&self) -> Vec<Rc<Node<T>>> {
         if self._visitation_order.borrow().is_some() {
             // If visitation order is already cached, return it
             return self._visitation_order.borrow().as_ref().unwrap().clone();
@@ -35,7 +36,7 @@ impl Graph {
 
         // Use node pointers as keys in the HashSet to avoid key cloning
         let mut visited = HashSet::new();
-        let mut stack: VecDeque<Rc<Node>> = VecDeque::new();
+        let mut stack: VecDeque<Rc<Node<T>>> = VecDeque::new();
         // Initialize the stack with root nodes
         // We use Rc<Node> to ensure we can clone nodes without deep copying
         for root in self.root_nodes.borrow().iter() {
@@ -65,7 +66,7 @@ impl Graph {
     }
 
     // Helper method to get nodes indexed by key
-    pub fn nodes_by_key(&self) -> HashMap<Vec<String>, Rc<Node>> {
+    pub fn nodes_by_key(&self) -> HashMap<Vec<String>, Rc<Node<T>>> {
         if self._nodes_by_key.borrow().is_some() {
             // If nodes_by_key is already cached, return it
             return self._nodes_by_key.borrow().as_ref().unwrap().clone();
@@ -85,11 +86,32 @@ mod tests {
     use super::*;
     use crate::graph::node::Node;
 
-    fn create_simple_graph() -> Graph {
+    pub struct TestNodeContent {
+        pub value: i32,
+    }
+
+    impl NodeContent for TestNodeContent {
+        type Output = i32;
+
+        fn id(&self) -> String {
+            format!("TestNodeContent:{}", self.value)
+        }
+
+        fn dependencies(&self) -> Vec<String> {
+            vec![]
+        }
+
+        fn execute(&self) -> Self::Output {
+            self.value
+        }
+    }
+
+    fn create_simple_graph() -> Graph<TestNodeContent> {
         let graph = Graph::new();
-        let root = Node::new(vec!["root".to_string()]);
-        let child1 = Node::new(vec!["child1".to_string()]);
-        let child2 = Node::new(vec!["child2".to_string()]);
+        let root: Rc<Node<TestNodeContent>> = Node::new(vec!["root"], None);
+        let child1: Rc<Node<TestNodeContent>> = Node::new(vec!["child1"], None);
+        let child1: Rc<Node<TestNodeContent>> = Node::new(vec!["child1"], None);
+        let child2: Rc<Node<TestNodeContent>> = Node::new(vec!["child2"], None);
 
         Node::add_child(&root, child1.clone());
         Node::add_child(&root, child2.clone());
@@ -98,17 +120,13 @@ mod tests {
         graph
     }
 
-    fn find_node_by_key(graph: &Graph, key: &Vec<String>) -> Option<Rc<Node>> {
-        graph.nodes_by_key().get(key).cloned()
-    }
-
-    fn create_complex_graph() -> Graph {
+    fn create_complex_graph() -> Graph<TestNodeContent> {
         let graph = Graph::new();
-        let root1 = Node::new(vec!["root1".to_string()]);
-        let root2 = Node::new(vec!["root2".to_string()]);
-        let child1 = Node::new(vec!["child1".to_string()]);
-        let child2 = Node::new(vec!["child2".to_string()]);
-        let grandchild = Node::new(vec!["grandchild".to_string()]);
+        let root1: Rc<Node<TestNodeContent>> = Node::new(vec!["root1"], None);
+        let root2: Rc<Node<TestNodeContent>> = Node::new(vec!["root2"], None);
+        let child1: Rc<Node<TestNodeContent>> = Node::new(vec!["child1"], None);
+        let child2: Rc<Node<TestNodeContent>> = Node::new(vec!["child2"], None);
+        let grandchild: Rc<TestNodeContent> = Node::new(vec!["grandchild"], None);
 
         Node::add_child(&root1, child1.clone());
         Node::add_child(&child1, grandchild.clone());
@@ -121,14 +139,14 @@ mod tests {
 
     #[test]
     fn test_graph_creation() {
-        let graph = Graph::new();
+        let graph: Graph<TestNodeContent> = Graph::new();
         assert!(graph.root_nodes.borrow().is_empty());
     }
 
     #[test]
     fn test_add_root_node() {
-        let graph = Graph::new();
-        let node = Node::new(vec!["root".to_string()]);
+        let graph: Graph<TestNodeContent> = Graph::new();
+        let node = Node::new(vec!["root".to_string()], None);
         graph.add_root_node(node.clone());
         assert_eq!(graph.root_nodes.borrow().len(), 1);
         assert_eq!(
@@ -167,25 +185,22 @@ mod tests {
 
         let nodes_by_key = graph.nodes_by_key();
         assert_eq!(nodes_by_key.len(), 5);
-        assert!(nodes_by_key.contains_key(&vec!["root1".to_string()]));
-        assert!(nodes_by_key.contains_key(&vec!["root2".to_string()]));
-        assert!(nodes_by_key.contains_key(&vec!["child1".to_string()]));
-        assert!(nodes_by_key.contains_key(&vec!["child2".to_string()]));
-        assert!(nodes_by_key.contains_key(&vec!["grandchild".to_string()]));
+        assert!(nodes_by_key.contains_key(&vec!["root1"]));
+        assert!(nodes_by_key.contains_key(&vec!["root2"]));
+        assert!(nodes_by_key.contains_key(&vec!["child1"]));
+        assert!(nodes_by_key.contains_key(&vec!["child2"]));
+        assert!(nodes_by_key.contains_key(&vec!["grandchild"]));
 
         assert!(
             nodes_by_key
-                .get(&vec!["root1".to_string()])
+                .get(&vec!["root1"])
                 .unwrap()
                 .get_parent()
                 .is_none(),
         );
         assert_eq!(
-            nodes_by_key
-                .get(&vec!["root1".to_string()])
-                .unwrap()
-                .get_children(),
-            vec![Node::new(vec!["child1".to_string()]),]
+            nodes_by_key.get(&vec!["root1"]).unwrap().get_children(),
+            vec![Node::new(vec!["child1"], None)]
         );
     }
 }
