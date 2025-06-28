@@ -3,7 +3,8 @@ mod execution;
 mod graph;
 mod traits;
 use entities::asset;
-use traits::Executable;
+
+use crate::traits::NodeContent;
 
 pub fn main() {
     // Example usage of the Asset struct and Executable trait

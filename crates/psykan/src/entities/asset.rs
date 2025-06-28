@@ -1,9 +1,9 @@
 use std::hash::{Hash, Hasher};
 
-use crate::traits::Executable;
+use crate::traits::NodeContent;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-struct AssetKey<'a>(Vec<&'a str>);
+pub struct AssetKey<'a>(Vec<&'a str>);
 
 impl<'a> AssetKey<'a> {
     pub fn new(key: Vec<&'a str>) -> Self {
@@ -25,11 +25,11 @@ pub struct Asset<'a, F, R>
 where
     F: FnOnce() -> R,
 {
-    pub name: String,
-    pub key: AssetKey<'a>,
-    pub description: String,
-    pub dependencies: Vec<AssetKey<'a>>,
-    pub func: F,
+    name: String,
+    key: AssetKey<'a>,
+    description: String,
+    dependencies: Vec<AssetKey<'a>>,
+    func: F,
 }
 
 impl<'a, F, R> Asset<'a, F, R>
@@ -51,14 +51,47 @@ where
             dependencies: dependencies,
         }
     }
+
+    pub fn name(&self) -> &String {
+        &self.name
+    }
+
+    pub fn key(&self) -> &AssetKey<'a> {
+        &self.key
+    }
+
+    pub fn description(&self) -> &String {
+        &self.description
+    }
+
+    pub fn dependencies(&self) -> &Vec<AssetKey<'a>> {
+        &self.dependencies
+    }
+
+    pub fn func(&self) -> &F {
+        &self.func
+    }
 }
 
-impl<'a, F, R> Executable<R> for Asset<'a, F, R>
+impl<'a, F, R> NodeContent for Asset<'a, F, R>
 where
     F: Fn() -> R,
 {
-    fn execute(&self) -> R {
-        (self.func)()
+    type Output = R;
+
+    fn id(&self) -> String {
+        self.key().to_vec().join("__")
+    }
+
+    fn dependencies(&self) -> Vec<String> {
+        self.dependencies
+            .iter()
+            .map(|d| d.to_vec().join("."))
+            .collect()
+    }
+
+    fn execute(&self) -> Self::Output {
+        (self.func())()
     }
 }
 
