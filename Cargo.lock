@@ -1341,6 +1341,7 @@ name = "psykan"
 version = "0.1.0"
 dependencies = [
  "pyo3",
+ "pyo3-ffi",
  "rayon",
 ]
 
