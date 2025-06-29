@@ -2,46 +2,49 @@ use std::hash::{Hash, Hasher};
 
 use crate::traits::NodeContent;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct AssetKey<'a>(Vec<&'a str>);
+const ID_SEPARATOR: &str = "__";
 
-impl<'a> AssetKey<'a> {
-    pub fn new(key: Vec<&'a str>) -> Self {
+#[derive(Debug, Clone, PartialEq, Eq)]
+
+pub struct AssetKey(Vec<String>);
+
+impl AssetKey {
+    pub fn new(key: Vec<String>) -> Self {
         AssetKey(key)
     }
 
-    pub fn to_vec(&self) -> Vec<&'a str> {
+    pub fn to_vec(&self) -> Vec<String> {
         self.0.clone()
     }
 }
 
-impl Hash for AssetKey<'_> {
+impl Hash for AssetKey {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.0.hash(state);
     }
 }
 
-pub struct Asset<'a, F, R>
+pub struct Asset<F, R>
 where
     F: FnOnce() -> R,
 {
     name: String,
-    key: AssetKey<'a>,
+    key: AssetKey,
     description: String,
-    dependencies: Vec<AssetKey<'a>>,
+    dependencies: Vec<AssetKey>,
     func: F,
 }
 
-impl<'a, F, R> Asset<'a, F, R>
+impl<F, R> Asset<F, R>
 where
     F: Fn() -> R,
 {
     pub fn new(
         name: String,
-        key: Vec<&'a str>,
+        key: Vec<String>,
         description: String,
         func: F,
-        dependencies: Vec<AssetKey<'a>>,
+        dependencies: Vec<AssetKey>,
     ) -> Self {
         Asset {
             name: name,
@@ -56,7 +59,7 @@ where
         &self.name
     }
 
-    pub fn key(&self) -> &AssetKey<'a> {
+    pub fn key(&self) -> &AssetKey {
         &self.key
     }
 
@@ -64,7 +67,7 @@ where
         &self.description
     }
 
-    pub fn dependencies(&self) -> &Vec<AssetKey<'a>> {
+    pub fn dependencies(&self) -> &Vec<AssetKey> {
         &self.dependencies
     }
 
@@ -73,20 +76,20 @@ where
     }
 }
 
-impl<'a, F, R> NodeContent for Asset<'a, F, R>
+impl<F, R> NodeContent for Asset<F, R>
 where
     F: Fn() -> R,
 {
     type Output = R;
 
     fn id(&self) -> String {
-        self.key().to_vec().join("__")
+        self.key().to_vec().join(ID_SEPARATOR)
     }
 
     fn dependencies(&self) -> Vec<String> {
         self.dependencies
             .iter()
-            .map(|d| d.to_vec().join("."))
+            .map(|key| key.to_vec().join(ID_SEPARATOR))
             .collect()
     }
 
@@ -103,14 +106,14 @@ mod tests {
     fn test_asset_creation() {
         let asset = Asset::new(
             "Test Asset".to_string(),
-            vec!["test"],
+            vec!["test".to_string()],
             "This is a test asset".to_string(),
             || "Test closure executed".to_string(),
             vec![],
         );
 
         assert_eq!(asset.name, "Test Asset");
-        assert_eq!(asset.key, AssetKey(vec!["test"]));
+        assert_eq!(asset.key, AssetKey(vec!["test".to_string()]));
         assert_eq!(asset.description, "This is a test asset");
     }
 
@@ -118,7 +121,7 @@ mod tests {
     fn test_asset_execution() {
         let asset = Asset::new(
             "Execution Test".to_string(),
-            vec!["execute"],
+            vec!["execute".to_string()],
             "This asset tests execution".to_string(),
             || "Execution successful!".to_string(),
             vec![],
@@ -132,7 +135,7 @@ mod tests {
         // Asset returning an integer
         let int_asset = Asset::new(
             "Integer Asset".to_string(),
-            vec!["integer"],
+            vec!["integer".to_string()],
             "This asset returns an integer".to_string(),
             || 42,
             vec![],
@@ -142,7 +145,7 @@ mod tests {
         // Asset returning a boolean
         let bool_asset = Asset::new(
             "Boolean Asset".to_string(),
-            vec!["boolean"],
+            vec!["boolean".to_string()],
             "This asset returns a boolean".to_string(),
             || true,
             vec![],

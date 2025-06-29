@@ -111,7 +111,6 @@ mod tests {
         let graph = Graph::new();
         let root: Rc<Node<TestNodeContent>> = Node::new("root".to_string(), None);
         let child1: Rc<Node<TestNodeContent>> = Node::new("child1".to_string(), None);
-        let child1: Rc<Node<TestNodeContent>> = Node::new("child1".to_string(), None);
         let child2: Rc<Node<TestNodeContent>> = Node::new("child2".to_string(), None);
 
         Node::add_child(&root, child1.clone());
