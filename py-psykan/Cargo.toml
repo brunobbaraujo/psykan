@@ -1,0 +1,12 @@
+[package]
+name = "py-psykan"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "psykan"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { workspace = true }
+psykan = { workspace = true }

@@ -1,5 +1,6 @@
 [workspace]
-members = ["crates/*"]
+members = ["crates/*", "py-psykan"]
+default-members = ["crates/*"]
 resolver = "3"
 
 [workspace.package]
@@ -7,7 +8,7 @@ authors = ["Bruno Bento"]
 license = "MIT"
 edition = "2024"
 version = "0.1.0"
-repository = "https://github.com/bocanada/psykan"
+repository = "https://github.com/brunobbaraujo/psykan"
 
 [workspace.dependencies]
 sea-orm = { version = "1.1.0", features = [
@@ -19,3 +20,5 @@ pyo3 = "0.25.1"
 tokio = "1.45.1"
 rayon = "1.10.0"
 pyo3-ffi = "0.25.1"
+
+psykan = { version = "0.1.0", path = "crates/psykan", default-features = false }
