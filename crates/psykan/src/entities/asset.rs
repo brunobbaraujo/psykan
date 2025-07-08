@@ -2,7 +2,7 @@ use std::hash::{Hash, Hasher};
 
 use crate::traits::NodeContent;
 
-const ID_SEPARATOR: &str = "__";
+pub const ID_SEPARATOR: &str = "__";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 
@@ -94,7 +94,7 @@ where
     }
 
     fn execute(&self) -> Self::Output {
-        (self.func())()
+        (self.func)()
     }
 }
 

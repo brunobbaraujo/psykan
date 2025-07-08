@@ -6,7 +6,9 @@ use std::fs;
 use std::path::Path;
 
 fn main() -> PyResult<()> {
-    let path = Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/python_app"));
+    pyo3::prepare_freethreaded_python();
+    let path = Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/py-psykan"));
+    println!("path: {}", path.display());
     let py_app = CString::new(fs::read_to_string(path.join("test.py"))?)?;
     let from_python = Python::with_gil(|py| -> PyResult<Py<PyAny>> {
         let syspath = py
@@ -30,6 +32,7 @@ mod tests {
 
     #[test]
     fn test_main() {
+        main().unwrap();
         assert!(main().is_ok());
     }
 }

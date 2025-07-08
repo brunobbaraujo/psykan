@@ -140,16 +140,16 @@ impl<T: NodeContent + Send + Sync> Graph<T> {
         // Process children in parallel and collect results
         let mut result = vec![root.clone()];
 
-        let children_nodes = root
-            .get_children()
-            .into_par_iter()
-            .map(|child| get_all_nodes(child.clone()))
-            .collect();
+        // let children_nodes = root
+        //     .get_children()
+        //     .into_par_iter()
+        //     .map(|child| get_all_nodes(child.clone()))
+        //     .collect();
 
         // Combine all results
-        for nodes in children_nodes {
-            result.extend(nodes);
-        }
+        // for nodes in children_nodes {
+        //     result.extend(nodes);
+        // }
 
         result
     }
@@ -162,7 +162,7 @@ impl<T: NodeContent + Send + Sync> Graph<T> {
         }
         let mut nodes_by_key = HashMap::new();
         for node_level in self.visitation_order() {
-            nodes_by_key.insert(node_levelnode.key().to_string(), node.clone());
+            nodes_by_key.insert(node_level.node.key().to_string(), node_level.node.clone());
         }
         // Cache the result
         *self._nodes_by_key.borrow_mut() = Some(nodes_by_key.clone());
